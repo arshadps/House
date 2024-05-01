@@ -14,50 +14,7 @@ class _HousePricePredictionAppState extends State<HousePricePredictionApp> {
   TextEditingController bathroomsController = TextEditingController();
   TextEditingController locationController = TextEditingController();
 
-  late double? predictedPrice; // Mark as late and nullable
-
-  @override
-  void initState() {
-    super.initState();
-    predictedPrice = null; // Initialize in initState
-  }
-
-  Future<void> predictPrice() async {
-    String url = 'http://127.0.0.1/predict';
-    Map<String, dynamic> requestBody = {
-      'size': sizeController.text,
-      'bedrooms': bedroomsController.text,
-      'bathrooms': bathroomsController.text,
-      'location': locationController.text,
-    };
-    print(json.encode(requestBody));
-
-    try {
-      var response = await http.post(
-        Uri.parse(url),
-        body: json.encode(requestBody),
-        headers: {
-          'Content-Type': 'application/json', // Set Content-Type header
-        },
-      );
-      print(response.body);
-
-      if (response.statusCode == 200) {
-        // Successful response
-        print("hi");
-        var jsonData = json.decode(response.body);
-        print(jsonData);
-        predictedPrice = jsonData['predicted_price'];
-        // Handle predicted price...
-      } else {
-        // Error handling
-        print('Failed to fetch data: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Exception handling
-      print('Error: $e');
-    }
-  }
+  double? predictedPrice; // Nullable double to hold the predicted price
 
   @override
   Widget build(BuildContext context) {
@@ -98,17 +55,48 @@ class _HousePricePredictionAppState extends State<HousePricePredictionApp> {
                 child: Text('Predict Price'),
               ),
               SizedBox(height: 20.0),
-              predictedPrice != null
-                  ? Text(
-                      'Predicted Price: \$${predictedPrice!.toStringAsFixed(2)}',
-                      style: TextStyle(fontSize: 18.0),
-                    )
-                  : Container(),
+              if (predictedPrice !=
+                  null) // Display predicted price only if not null
+                Text(
+                  'Predicted Price: \$${predictedPrice!.toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 18.0),
+                ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> predictPrice() async {
+    String url = 'http://10.0.2.2/predict'; // Adjust server URL
+    Map<String, dynamic> requestBody = {
+      'size': sizeController.text,
+      'bedrooms': bedroomsController.text,
+      'bathrooms': bathroomsController.text,
+      'location': locationController.text,
+    };
+
+    try {
+      var response = await http.post(
+        Uri.parse(url),
+        body: json.encode(requestBody),
+        headers: {
+          'Content-Type': 'application/json', // Set Content-Type header
+        },
+      );
+
+      if (response.statusCode == 200) {
+        var jsonData = json.decode(response.body);
+        setState(() {
+          predictedPrice = jsonData['predicted_price']; // Update predictedPrice
+        });
+      } else {
+        print('Failed to fetch data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 }
 
